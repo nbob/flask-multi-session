@@ -55,6 +55,8 @@ if __name__ == '__main__':
 
 **Important!** Added new method __clear_user_sessions__ to [Session class](http://flask.pocoo.org/docs/0.10/api/#sessions).
 
+Example: `session.clear_user_sessions()` delete all sessions for current user, but you can specify user_id: `session.clear_user_sessions(user_id=23)` delete all sessions for user with id=23.
+
 Set Redis
 --------------
 If you have a remote __Redis__ you may specify one in __RedisSessionInterface__ constructor. Also a `prefix` argument is available to set prefix for saving user sessions in __Redis__.
