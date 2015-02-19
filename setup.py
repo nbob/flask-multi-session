@@ -36,7 +36,7 @@ setup(
   description='Redis sessions for Flask apps',
   py_modules=['flask_redis_session'],
   zip_safe=False,
-  package_data={'': ['LICENSE', 'requirements.txt']},
+  package_data={'': ['.travis.yml', 'LICENSE', 'requirements.txt']},
   include_package_data=True,
   platforms='any',
   install_requires=get_requirements(),
