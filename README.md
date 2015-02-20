@@ -35,7 +35,7 @@ def login():
 
 @app.route('/logout')
 def logout():
-  del session = random.randint(1, 10000)
+  del session
   return redirect(url_for('index'))
 
 @app.route('/logout_all_devices')
