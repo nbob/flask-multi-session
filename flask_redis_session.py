@@ -90,9 +90,13 @@ class RedisSessionInterface(SessionInterface):
   serializer = json
   session_class = RedisSession
 
-  def __init__(self, redis=None, prefix='session:'):
-    if redis is None:
+  def __init__(self, redis=None, redis_config=None, prefix='session:'):
+
+    if redis_config is not None:
+      redis = Redis(**redis_config)
+    elif redis is None:
       redis = Redis()
+
     self.redis = redis
     self.prefix = prefix
 
@@ -110,6 +114,8 @@ class RedisSessionInterface(SessionInterface):
     local.force_null = False
     sid = request.cookies.get(app.session_cookie_name)
 
+    print(sid)
+
     if not sid:
       sid = self.generate_sid()
       return self.session_class(sid=sid, new=True, redis=self.redis, prefix=self.prefix)
@@ -124,6 +130,8 @@ class RedisSessionInterface(SessionInterface):
     return self.session_class(sid=sid, new=True, redis=self.redis, prefix=self.prefix)
 
   def save_session(self, app, session, response):
+
+    print(session)
 
     if local.force_null:
       session = self.session_class(sid=session.sid, new=True, redis=self.redis, prefix=self.prefix)
