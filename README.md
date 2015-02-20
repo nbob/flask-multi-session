@@ -1,7 +1,4 @@
-[![build status](https://travis-ci.org/atkin1450/flask-redis-session.svg?branch=master)](https://travis-ci.org/atkin1450/flask-redis-session)
-
-
-Flask-Redis-Session
+Flask-Redis-Session [![build status](https://travis-ci.org/atkin1450/flask-redis-session.svg?branch=master)](https://travis-ci.org/atkin1450/flask-redis-session)
 ==============
 
 __Flask-Redis-Session__ provides __Redis__ session storage for __Flask__ apps. This module allows you to manage user sessions from different devices, thus you can logout user from all devices. __Flask-Redis-Session__ supports python>=3.4.
