@@ -1,3 +1,6 @@
+[![build status](https://travis-ci.org/atkin1450/flask-redis-session.svg?branch=master)](https://travis-ci.org/atkin1450/flask-redis-session)
+
+
 Flask-Redis-Session
 ==============
 
