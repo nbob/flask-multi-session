@@ -19,7 +19,6 @@ version_line = [line for line in open(module_path)
 __version__ = '.'.join(eval(version_line.split('__version_info__ = ')[-1]))
 
 
-
 def get_requirements():
   with open('requirements.txt') as f:
     rv = f.read().splitlines()
