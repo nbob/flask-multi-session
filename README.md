@@ -1,4 +1,4 @@
-Flask-Redis-Session
+Flask-Redis-Session [![build status](https://travis-ci.org/atkin1450/flask-redis-session.svg?branch=master)](https://travis-ci.org/atkin1450/flask-redis-session) [![build status](https://pypip.in/license/Flask-Redis-Session/badge.png)](https://pypi.python.org/pypi/Flask-Redis-Session)
 ==============
 
 __Flask-Redis-Session__ provides __Redis__ session storage for __Flask__ apps. This module allows you to manage user sessions from different devices, thus you can logout user from all devices. __Flask-Redis-Session__ supports python>=3.4.
@@ -35,7 +35,7 @@ def login():
 
 @app.route('/logout')
 def logout():
-  del session = random.randint(1, 10000)
+  del session
   return redirect(url_for('index'))
 
 @app.route('/logout_all_devices')
