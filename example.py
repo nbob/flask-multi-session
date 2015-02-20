@@ -31,7 +31,7 @@ def logout_all_devices():
   session.clear_user_sessions()
   return redirect(url_for('index'))
 
-from flask_redis_session import RedisSessionInterface
+from flask.ext.multisession import RedisSessionInterface
 app.session_interface = RedisSessionInterface()
 
 

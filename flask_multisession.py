@@ -1,4 +1,4 @@
-__version_info__ = ('0', '1', '6')
+__version_info__ = ('0', '1', '7')
 __version__ = '.'.join(__version_info__)
 __author__ = 'Nikita Bobrov'
 __license__ = 'MIT/X11'

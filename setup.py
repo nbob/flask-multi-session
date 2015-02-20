@@ -1,8 +1,8 @@
 """
-Flask-Redis-Session
+Flask-Multi-Session
 ==============
 
-Flask-Redis-Session provides to store sessions in Redis for Flask apps
+Flask-Multi-Session provides to store sessions in Redis for Flask apps
 
 """
 
@@ -12,7 +12,7 @@ from setuptools import setup, find_packages
 from setuptools.command.test import test as TestCommand
 
 
-module_path = os.path.join(os.path.dirname(__file__), 'flask_redis_session.py')
+module_path = os.path.join(os.path.dirname(__file__), 'flask_multisession.py')
 version_line = [line for line in open(module_path)
                 if line.startswith('__version_info__')][0]
 
@@ -27,14 +27,14 @@ def get_requirements():
 
 
 setup(
-  name='Flask-Redis-Session',
+  name='Flask-Multi-Session',
   version=__version__,
-  url='https://github.com/atkin1450/flask-redis-session',
+  url='https://github.com/atkin1450/flask-multi-session',
   license='MIT',
   author='Nikita Bobrov',
   author_email='atkin1450@gmail.com',
-  description='Redis sessions for Flask apps',
-  py_modules=['flask_redis_session'],
+  description='Redis multi-sessions for Flask apps',
+  py_modules=['flask_multisession'],
   zip_safe=False,
   package_data={'': ['.travis.yml', 'LICENSE', 'requirements.txt']},
   include_package_data=True,
