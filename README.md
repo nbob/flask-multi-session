@@ -1,13 +1,13 @@
-Flask-Redis-Session [![build status](https://travis-ci.org/atkin1450/flask-redis-session.svg?branch=master)](https://travis-ci.org/atkin1450/flask-redis-session) [![build status](https://pypip.in/license/Flask-Redis-Session/badge.png)](https://pypi.python.org/pypi/Flask-Redis-Session)
+Flask-Multi-Session [![build status](https://travis-ci.org/atkin1450/flask-multi-session.svg?branch=master)](https://travis-ci.org/atkin1450/flask-multi-session) [![build status](https://pypip.in/license/Flask-Multi-Session/badge.png)](https://pypi.python.org/pypi/Flask-Multi-Session)
 ==============
 
-__Flask-Redis-Session__ provides __Redis__ session storage for __Flask__ apps. This module allows you to manage user sessions from different devices, thus you can logout user from all devices. __Flask-Redis-Session__ supports python>=3.4.
+__Flask-Multi-Session__ provides __Redis__ session storage for __Flask__ apps. This module allows you to manage user sessions from different devices, thus you can logout user from all devices. __Flask-Multi-Session__ supports python>=3.3.
 
 Installation
 --------------
-Install __Flask-Redis-Session__ from __pip__.
+Install __Flask-Multi-Session__ from __pip__.
 
-`pip3 install flask-redis-session`
+`pip3 install flask-multi-session`
 
 Usage
 --------------
@@ -43,7 +43,7 @@ def logout_all_devices():
   session.clear_user_sessions()
   return redirect(url_for('index'))
 
-from flask_redis_session import RedisSessionInterface
+from flask.ext.multisession import RedisSessionInterface
 app.session_interface = RedisSessionInterface()
 
 
