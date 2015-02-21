@@ -73,6 +73,6 @@ redis_storage = redis.Redis(
   charset='utf-8'
 )
 
-from flask_redis_session import RedisSessionInterface
+from flask.ext.multisession import RedisSessionInterface
 app.session_interface = RedisSessionInterface(redis=redis_storage, prefix='session:')
 ~~~~~~~~~~~~~~
