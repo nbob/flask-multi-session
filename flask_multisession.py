@@ -1,170 +1,132 @@
-__version_info__ = ('0', '1', '7')
+import pymongo
+from pymongo import MongoClient
+
+__version_info__ = ('0', '2', '0')
 __version__ = '.'.join(__version_info__)
 __author__ = 'Nikita Bobrov'
 __license__ = 'MIT/X11'
-__copyright__ = '(c) 2015 by Nikita Bobrov'
+__copyright__ = '(c) 2017 by Nikita Bobrov'
 
-
-import json
-from datetime import timedelta, datetime
+from datetime import datetime
 from uuid import uuid4
-from redis import Redis
 from werkzeug.datastructures import CallbackDict
 from flask.sessions import SessionInterface, SessionMixin
-from werkzeug.local import Local
-import dateutil.parser
 
 
-local = Local()
+class MongoSessionManager:
+    collection_name = 'sessions'
+
+    def __init__(self, db='flask_multisession', permanent=True, *args, **kwargs):
+        self._permanent = permanent
+        self._client = MongoClient(*args, **kwargs)
+        self._db = self._client[db]
+        self._collection = self._db[self.collection_name]
+        self._check_indexes()
+
+    def _check_indexes(self):
+        sid_index = False
+        uid_index = False
+        ttl_index = False
+        for _, index in enumerate(self._collection.list_indexes()):
+            if index['key'].get('session_id') is not None:
+                sid_index = True
+            if index['key'].get('user_id') is not None:
+                uid_index = True
+            if index['key'].get('expired') is not None:
+                ttl_index = True
+
+        if not sid_index:
+            self._collection.create_index([('session_id', pymongo.HASHED)])
+
+        if not uid_index:
+            self._collection.create_index([('user_id', pymongo.HASHED)], sparse=True)
+
+        if not ttl_index:
+            self._collection.create_index('expired', expireAfterSeconds=0)
+
+    def get_session(self, sid):
+        uid = None
+        data = {}
+        if sid:
+            session = self._collection.find_one({'session_id': sid})
+            if session is not None:
+                uid = session.get('user_id', uid)
+                data = session.get('data', {})
+        else:
+            sid = str(uuid4())
+        session = MongoSession(
+            data=data,
+            session_id=sid,
+            user_id=uid,
+            permanent=self._permanent,
+            manager=self
+        )
+        return session
+
+    def update_session(self, session, expired):
+        sid = session.session_id
+        data = {
+            'session_id': sid,
+            'expired': expired,
+            'last_update': datetime.now(),
+            'data': dict(session)
+        }
+        if session.is_authenticated():
+            data['user_id'] = session.user_id
+        self._collection.replace_one({'session_id': sid}, data, upsert=True)
+
+    def logout_all_devices(self, session):
+        if session.user_id is not None:
+            self._collection.update_many(
+                {'user_id': session.user_id},
+                {'$unset': {'user_id': ''}}
+            )
 
 
-def sync_user_sessions(redis, prefix, user_id):
+class MongoSession(CallbackDict, SessionMixin):
+    def __init__(self, data={}, session_id=None, user_id=None, permanent=None, manager=None):
+        self.manager = manager
+        self.session_id = session_id
+        self.user_id = user_id
+        self.modified = False
+        self.permanent = permanent
 
-  user_key = _get_user_prefix(user_id)
-  sessions = redis.hgetall(user_key)
+        def on_update(self):
+            self.modified = True
 
-  del_sids = []
+        CallbackDict.__init__(self, data, on_update)
 
-  for sid, value in sessions.items():
-    sid = sid.decode()
-    value = json.loads(value.decode())
-    expires = value['expires']
-    expires = dateutil.parser.parse(expires)
+    def login(self, uid):
+        self.user_id = uid
+        self.modified = True
 
-    if expires < datetime.now():
-      del_sids.append(sid)
-    else:
-      session = redis.get("".join([prefix, sid]))
-      if session:
-        session = json.loads(session.decode())
-        if user_id != session['user_id']:
-          del_sids.append(sid)
+    def logout(self):
+        self.user_id = None
+        self.modified = True
 
+    def is_authenticated(self):
+        return self.user_id is not None
 
-  if len(del_sids) > 0:
-    redis.hdel(user_key, *del_sids)
-
-
-
-def _get_user_prefix(user_id):
-  return "user_sessions:%s" % user_id
+    def logout_all_devices(self):
+        self.manager.logout_all_devices(self)
+        self.logout()
 
 
-class RedisSession(CallbackDict, SessionMixin):
+class MongoSessionInterface(SessionInterface):
+    collection_name = 'sessions'
 
-  def __init__(self, initial=None, sid=None, new=False, redis=None, prefix=None):
-    def on_update(self):
-      self.modified = True
-    CallbackDict.__init__(self, initial, on_update)
-    self.sid = sid
-    self.new = new
-    self.modified = False
+    def __init__(self, *args, **kwargs):
+        self._manager = MongoSessionManager(*args, **kwargs)
 
-    self.redis = redis
-    self.prefix = prefix or ''
+    def open_session(self, app, request):
+        sid = request.cookies.get(app.session_cookie_name)
+        return self._manager.get_session(sid)
 
-  def clear_user_sessions(self, user_id=None):
+    def save_session(self, app, session: MongoSession, response):
+        domain = self.get_cookie_domain(app)
+        sid = session.session_id
+        expired = self.get_expiration_time(app, session)
+        response.set_cookie(app.session_cookie_name, sid, expires=expired, httponly=True, domain=domain)
 
-    if self.redis is None:
-      return
-
-    user_id = user_id or self.get('user_id')
-
-    if user_id is None:
-      return
-
-    sync_user_sessions(self.redis, self.prefix, user_id)
-
-    user_key = _get_user_prefix(user_id)
-    sessions = self.redis.hgetall(user_key)
-    keys = ["".join([self.prefix, sid.decode()]) for sid, _ in sessions.items()]
-
-    keys.append(user_key)
-    self.redis.delete(*keys)
-
-    local.force_null = True
-    local.user_id = None
-
-
-class RedisSessionInterface(SessionInterface):
-  serializer = json
-  session_class = RedisSession
-
-  def __init__(self, redis=None, redis_config=None, prefix='session:'):
-
-    if redis_config is not None:
-      redis = Redis(**redis_config)
-    elif redis is None:
-      redis = Redis()
-
-    self.redis = redis
-    self.prefix = prefix
-
-  def generate_sid(self):
-    return str(uuid4())
-
-  def get_redis_expiration_time(self, app, session):
-    if session.permanent:
-      return app.permanent_session_lifetime
-    return timedelta(days=1)
-
-  def open_session(self, app, request):
-
-    local.user_id = None
-    local.force_null = False
-    sid = request.cookies.get(app.session_cookie_name)
-
-    print(sid)
-
-    if not sid:
-      sid = self.generate_sid()
-      return self.session_class(sid=sid, new=True, redis=self.redis, prefix=self.prefix)
-    val = self.redis.get(self.prefix + sid)
-
-    if val is not None:
-      val = val.decode()
-      data = self.serializer.loads(val)
-      local.user_id = data.get('user_id')
-      return self.session_class(data, sid=sid, redis=self.redis, prefix=self.prefix)
-
-    return self.session_class(sid=sid, new=True, redis=self.redis, prefix=self.prefix)
-
-  def save_session(self, app, session, response):
-
-    print(session)
-
-    if local.force_null:
-      session = self.session_class(sid=session.sid, new=True, redis=self.redis, prefix=self.prefix)
-
-    domain = self.get_cookie_domain(app)
-
-    if not session:
-      self.redis.delete(self.prefix + session.sid)
-      if session.modified:
-        response.delete_cookie(app.session_cookie_name,
-                               domain=domain)
-      return
-
-    redis_exp = self.get_redis_expiration_time(app, session)
-    cookie_exp = self.get_expiration_time(app, session)
-
-    val = self.serializer.dumps(dict(session))
-    self.redis.setex(self.prefix + session.sid, val,
-                     int(redis_exp.total_seconds()))
-
-    user_id = session.get("user_id")
-    if user_id is not None:
-      
-      if local.user_id is None:
-        sync_user_sessions(self.redis, self.prefix, user_id)
-
-      exp_date = datetime.now() + redis_exp
-      data = {'expires': exp_date.isoformat()}
-      data = self.serializer.dumps(data)
-      self.redis.hset(_get_user_prefix(user_id), session.sid, data)
-
-    
-
-    response.set_cookie(app.session_cookie_name, session.sid,
-                        expires=cookie_exp, httponly=True,
-                        domain=domain)
+        if session.modified or expired:
+            self._manager.update_session(session, expired)
