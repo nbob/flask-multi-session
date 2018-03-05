@@ -1,4 +1,4 @@
-  Flask-Multi-Session [![build status](https://travis-ci.org/nbob/flask-multi-session.svg?branch=master)](https://travis-ci.org/nbob/flask-multi-session) [![build status](https://pypip.in/license/Flask-Multi-Session/badge.png)](https://pypi.python.org/pypi/Flask-Multi-Session)
+  Flask-Multi-Session [![build status](https://travis-ci.org/nbob/flask-multi-session.svg?branch=master)](https://travis-ci.org/nbob/flask-multi-session) [![build status](https://img.shields.io/pypi/l/Flask-Multi-Session.svg)](https://pypi.python.org/pypi/Flask-Multi-Session)
 ==============
 
 __Flask-Multi-Session__ provides __Mongo__ session storage for __Flask__ apps. This module allows you to manage user sessions from different devices, thus you can logout user from all devices. __Flask-Multi-Session__ supports python>=3.5.
