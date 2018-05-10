@@ -91,7 +91,7 @@ class MongoSession(CallbackDict, SessionMixin):
         self.modified = False
         self.permanent = permanent
 
-        def on_update():
+        def on_update(self):
             self.modified = True
 
         CallbackDict.__init__(self, data, on_update)
